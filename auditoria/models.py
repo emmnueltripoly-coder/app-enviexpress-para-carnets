@@ -29,6 +29,10 @@ class AuditLog(models.Model):
         TURNO_CAMBIADO = "TURNO_CAMBIADO", "Turno cambiado"
         CONFIG_CAMBIADA = "CONFIG_CAMBIADA", "Configuración cambiada"
         EXPORTACION_DATOS = "EXPORTACION_DATOS", "Exportación de datos"
+        # Hito 1 (Identidad): acciones aditivas para el rastro BASC de
+        # gestión de personal y Habeas Data. El trigger append-only no cambia.
+        EMPLEADO_CREADO = "EMPLEADO_CREADO", "Empleado creado"
+        CONSENTIMIENTO_REGISTRADO = "CONSENTIMIENTO_REGISTRADO", "Consentimiento Habeas Data registrado"
 
     id = models.UUIDField(
         primary_key=True,

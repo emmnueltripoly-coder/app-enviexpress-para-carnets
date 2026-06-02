@@ -52,8 +52,15 @@ INSTALLED_APPS = [
     # Terceros
     "rest_framework",
     # Apps del proyecto
+    "common",
     "auditoria",
+    "organizacion",
+    "personal",
 ]
+
+# Modelo de usuario personalizado (Hito 1). DEBE definirse antes de la primera
+# migración del proyecto; por eso se recrea la BD de desarrollo desde cero.
+AUTH_USER_MODEL = "personal.Usuario"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
