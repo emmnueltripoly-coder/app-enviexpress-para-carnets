@@ -8,6 +8,7 @@ python-dotenv. NUNCA se commitean secretos en este archivo.
 """
 
 import os
+from datetime import timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -156,7 +157,23 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
+    # Por defecto TODO endpoint exige autenticación (IsAuthenticated) y, además,
+    # bloquea cualquier escritura del rol AUDITOR de forma GLOBAL (EsSoloLectura).
+    # login/refresh sobreescriben esto con AllowAny.
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",
+        "personal.permissions.EsSoloLectura",
     ),
+}
+
+
+# --------------------------------------------------------------------------
+# JWT (djangorestframework-simplejwt)
+# --------------------------------------------------------------------------
+# Access corto (se usa en cada request) + refresh largo (renueva el access).
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": False,
+    "AUTH_HEADER_TYPES": ("Bearer",),
 }
