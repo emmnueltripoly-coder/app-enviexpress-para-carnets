@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "personal",
     "marcacion",
     "turnos",
+    "novedades",
 ]
 
 # Modelo de usuario personalizado (Hito 1). DEBE definirse antes de la primera
@@ -148,8 +149,46 @@ USE_TZ = True
 # --------------------------------------------------------------------------
 STATIC_URL = "static/"
 
+# Almacenamiento PRIVADO para soportes de novedades (datos sensibles de salud,
+# Ley 1581). Fuera de cualquier ruta servida públicamente; se entrega solo por
+# vista autenticada. NO se define MEDIA_URL para estos archivos.
+PRIVATE_MEDIA_ROOT = os.environ.get(
+    "PRIVATE_MEDIA_ROOT", str(BASE_DIR / "private_media")
+)
+# Tamaño máximo de un soporte (bytes) y tipos MIME permitidos.
+SOPORTE_MAX_BYTES = int(os.environ.get("SOPORTE_MAX_BYTES", 10 * 1024 * 1024))
+SOPORTE_MIME_PERMITIDOS = (
+    "image/jpeg",
+    "image/png",
+    "image/jpg",
+    "application/pdf",
+)
+
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# --------------------------------------------------------------------------
+# Email (notificación de novedades a RRHH)
+# --------------------------------------------------------------------------
+# Backend configurable; en desarrollo, consola. En tests, pytest-django/Django
+# usan automáticamente el backend en memoria (locmem) con mail.outbox.
+EMAIL_BACKEND = os.environ.get(
+    "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
+)
+DEFAULT_FROM_EMAIL = os.environ.get(
+    "DEFAULT_FROM_EMAIL", "no-responder@enviexpresslogistica.com"
+)
+# Destinatarios de RRHH (de entorno, NO fijos en código).
+NOVEDADES_EMAILS = [
+    correo.strip()
+    for correo in os.environ.get(
+        "NOVEDADES_EMAILS",
+        "yulieth.alvarez@enviexpresslogistica.com,"
+        "gloria.arias@enviexpresslogistica.com",
+    ).split(",")
+    if correo.strip()
+]
 
 
 # --------------------------------------------------------------------------

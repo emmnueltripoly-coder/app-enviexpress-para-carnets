@@ -33,6 +33,10 @@ class AuditLog(models.Model):
         # gestión de personal y Habeas Data. El trigger append-only no cambia.
         EMPLEADO_CREADO = "EMPLEADO_CREADO", "Empleado creado"
         CONSENTIMIENTO_REGISTRADO = "CONSENTIMIENTO_REGISTRADO", "Consentimiento Habeas Data registrado"
+        # Hito 6 (Novedades): rechazo de novedad y acceso a soportes sensibles
+        # (datos de salud, Ley 1581). Aditivo; el trigger append-only no cambia.
+        NOVEDAD_RECHAZADA = "NOVEDAD_RECHAZADA", "Novedad rechazada"
+        SOPORTE_ACCEDIDO = "SOPORTE_ACCEDIDO", "Soporte de novedad accedido"
 
     id = models.UUIDField(
         primary_key=True,
