@@ -44,6 +44,8 @@ ALLOWED_HOSTS = [
 # Aplicaciones
 # --------------------------------------------------------------------------
 INSTALLED_APPS = [
+    "unfold",
+    "unfold.contrib.filters",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -217,4 +219,31 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "ROTATE_REFRESH_TOKENS": False,
     "AUTH_HEADER_TYPES": ("Bearer",),
+}
+
+
+# --------------------------------------------------------------------------
+# django-unfold — Tema del panel administrativo (Hito 7)
+# --------------------------------------------------------------------------
+UNFOLD = {
+    "SITE_TITLE": "Control de Asistencia",
+    "SITE_HEADER": "Control de Asistencia — Enviexpress Logística",
+    "SITE_URL": "/",
+    "SITE_ICON": None,
+    "COLORS": {
+        "primary": {
+            "50": "240 249 255",
+            "100": "224 242 254",
+            "200": "186 230 253",
+            "300": "125 211 252",
+            "400": "56 189 248",
+            "500": "14 165 233",
+            "600": "2 132 199",
+            "700": "3 105 161",
+            "800": "7 89 133",
+            "900": "12 74 110",
+            "950": "8 47 73",
+        },
+    },
+    "DASHBOARD_CALLBACK": "config.admin_dashboard.dashboard_callback",
 }

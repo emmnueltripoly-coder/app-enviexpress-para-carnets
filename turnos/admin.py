@@ -1,4 +1,10 @@
+"""Admin de turnos y parámetros laborales (Hito 7)."""
+
+from unfold.admin import ModelAdmin
+
 from django.contrib import admin
+
+from common.admin_mixins import AuditorReadOnlyMixin, ImmutableAdminMixin, SedeFilterMixin
 
 from .models import (
     AsignacionTurno,
@@ -10,14 +16,16 @@ from .models import (
 
 
 @admin.register(Turno)
-class TurnoAdmin(admin.ModelAdmin):
+class TurnoAdmin(AuditorReadOnlyMixin, ModelAdmin):
     list_display = ("nombre", "hora_inicio", "hora_fin", "cruza_medianoche", "sede", "activo")
     list_filter = ("cruza_medianoche", "activo", "sede")
     search_fields = ("nombre",)
 
 
 @admin.register(AsignacionTurno)
-class AsignacionTurnoAdmin(admin.ModelAdmin):
+class AsignacionTurnoAdmin(SedeFilterMixin, AuditorReadOnlyMixin, ModelAdmin):
+    sede_filter_field = "empleado__sede_id"
+
     list_display = ("empleado", "turno", "fecha_inicio", "fecha_fin", "activo")
     list_filter = ("activo", "turno")
     search_fields = ("empleado__documento_identidad", "empleado__apellidos")
@@ -25,7 +33,7 @@ class AsignacionTurnoAdmin(admin.ModelAdmin):
 
 
 @admin.register(ParametrosLaborales)
-class ParametrosLaboralesAdmin(admin.ModelAdmin):
+class ParametrosLaboralesAdmin(AuditorReadOnlyMixin, ModelAdmin):
     list_display = (
         "vigente_desde",
         "inicio_jornada_nocturna",
@@ -37,15 +45,18 @@ class ParametrosLaboralesAdmin(admin.ModelAdmin):
 
 
 @admin.register(DiaFestivo)
-class DiaFestivoAdmin(admin.ModelAdmin):
+class DiaFestivoAdmin(AuditorReadOnlyMixin, ModelAdmin):
     list_display = ("fecha", "descripcion")
     search_fields = ("descripcion",)
     date_hierarchy = "fecha"
 
 
 @admin.register(ResumenJornada)
-class ResumenJornadaAdmin(admin.ModelAdmin):
-    # Derivado y recalculable; en el admin solo lectura para evitar ediciones manuales.
+class ResumenJornadaAdmin(SedeFilterMixin, ImmutableAdminMixin, AuditorReadOnlyMixin, ModelAdmin):
+    """Derivado y recalculable: solo lectura para todos."""
+
+    sede_filter_field = "empleado__sede_id"
+
     list_display = (
         "empleado",
         "fecha",
@@ -60,9 +71,3 @@ class ResumenJornadaAdmin(admin.ModelAdmin):
     list_filter = ("fecha",)
     search_fields = ("empleado__documento_identidad", "empleado__apellidos")
     date_hierarchy = "fecha"
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_add_permission(self, request):
-        return False
