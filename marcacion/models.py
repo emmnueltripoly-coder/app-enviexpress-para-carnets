@@ -54,16 +54,23 @@ class Marcacion(models.Model):
     )
     tipo = models.CharField(max_length=10, choices=Tipo.choices)
 
-    # Sello del servidor (UTC). Fuente temporal confiable: nunca se confía solo
-    # en el cliente. Se usa default=timezone.now (en vez de auto_now_add) para
-    # poder derivar 'minuto_marcacion' de forma consistente en save() antes del
-    # INSERT.
+    # --- Sellos temporales (integridad temporal BASC) -----------------------
+    # HORA OFICIAL de la marcación: extraída del token QR firmado por el
+    # servidor. Es la que cuenta para asistencia (no el celular ni el envío).
+    # En marcación online se llena con la hora del QR escaneado; nullable para
+    # correcciones (sin QR).
+    timestamp_qr = models.DateTimeField(null=True, blank=True)
+    # Sello del servidor (UTC): cuándo el servidor recibió/registró el dato.
+    # En offline puede ser minutos/horas posterior a timestamp_qr. Se usa
+    # default=timezone.now (en vez de auto_now_add) para derivar 'minuto_marcacion'
+    # de forma consistente en save() antes del INSERT.
     timestamp_servidor = models.DateTimeField(default=timezone.now, db_index=True)
-    # Sello del dispositivo (Hito 4 / offline). Nullable hasta entonces.
+    # Sello del dispositivo (hora del celular al escanear). SOLO informativo:
+    # nunca se confía en él. Nullable.
     timestamp_dispositivo = models.DateTimeField(null=True, blank=True)
 
-    # Clave anti-duplicado: timestamp_servidor truncado al minuto. Derivada en
-    # save(); no editable directamente.
+    # Clave anti-duplicado: la hora OFICIAL truncada al minuto (timestamp_qr si
+    # existe, si no timestamp_servidor). Derivada en save(); no editable.
     minuto_marcacion = models.DateTimeField(editable=False, db_index=True)
 
     # Coordenadas reportadas por el empleado al marcar.
@@ -75,6 +82,15 @@ class Marcacion(models.Model):
     distancia_metros = models.DecimalField(max_digits=10, decimal_places=2)
 
     es_offline = models.BooleanField(default=False)
+    # Bandera de revisión RRHH (NO bloqueo) para casos offline sospechosos:
+    # QR muy antiguo, o desfase grosero del timestamp_dispositivo.
+    revisar_offline = models.BooleanField(default=False)
+
+    # Identificador único del token QR (jti). Clave de anti-replay/idempotencia.
+    # El MISMO QR del kiosco lo escanean varios empleados en su ventana de 45 s,
+    # por eso la unicidad es por (empleado, qr_jti), NO global. Nullable para
+    # correcciones (sin QR).
+    qr_jti = models.CharField(max_length=32, null=True, blank=True)
 
     # Corrección contable: una marcación que corrige a otra anterior.
     corrige_a = models.ForeignKey(
@@ -102,6 +118,13 @@ class Marcacion(models.Model):
                 condition=models.Q(corrige_a__isnull=True),
                 name="uniq_marcacion_empleado_tipo_minuto",
             ),
+            # Anti-replay/idempotencia: un empleado no reutiliza el mismo QR.
+            # Distintos empleados SÍ comparten el QR del kiosco -> incluye empleado.
+            models.UniqueConstraint(
+                fields=["empleado", "qr_jti"],
+                condition=models.Q(qr_jti__isnull=False),
+                name="uniq_marcacion_empleado_qrjti",
+            ),
         ]
 
     def __str__(self):
@@ -115,9 +138,10 @@ class Marcacion(models.Model):
                 "Para corregir, cree una nueva con 'corrige_a'."
             )
         if self.minuto_marcacion is None:
-            self.minuto_marcacion = self.timestamp_servidor.replace(
-                second=0, microsecond=0
-            )
+            # La clave anti-duplicado usa la hora OFICIAL: timestamp_qr cuando
+            # existe (incl. offline), si no el sello del servidor.
+            base = self.timestamp_qr or self.timestamp_servidor
+            self.minuto_marcacion = base.replace(second=0, microsecond=0)
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):

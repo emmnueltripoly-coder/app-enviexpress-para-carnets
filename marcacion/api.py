@@ -22,6 +22,7 @@ from .serializers import (
     CorreccionInputSerializer,
     MarcacionInputSerializer,
     MarcacionSerializer,
+    SyncBatchSerializer,
 )
 from .services import (
     MarcacionDuplicada,
@@ -31,6 +32,7 @@ from .services import (
     corregir_marcacion,
     generar_token_qr,
     registrar_marcacion,
+    sincronizar_lote,
 )
 
 
@@ -93,6 +95,31 @@ class MarcacionCreateView(APIView):
         return Response(
             MarcacionSerializer(marcacion).data, status=status.HTTP_201_CREATED
         )
+
+
+class SyncOfflineView(APIView):
+    """POST /api/marcacion/sync/ -> sincroniza un LOTE de marcaciones offline.
+
+    Sin permisos propios: hereda los globales (IsAuthenticated + EsSoloLectura),
+    de modo que el AUDITOR no puede sincronizar (POST -> 403).
+    """
+
+    def post(self, request, *args, **kwargs):
+        empleado = getattr(request.user, "empleado", None)
+        if empleado is None:
+            raise PermissionDenied(
+                "El usuario autenticado no tiene un perfil de empleado."
+            )
+
+        entrada = SyncBatchSerializer(data=request.data)
+        entrada.is_valid(raise_exception=True)
+
+        resultados = sincronizar_lote(
+            empleado=empleado,
+            items=entrada.validated_data["marcaciones"],
+            ip_origen=get_client_ip(request),
+        )
+        return Response({"resultados": resultados}, status=status.HTTP_200_OK)
 
 
 class CorreccionView(APIView):

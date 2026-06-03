@@ -11,13 +11,21 @@ class MarcacionAdmin(admin.ModelAdmin):
         "empleado",
         "sede",
         "tipo",
+        "timestamp_qr",
         "timestamp_servidor",
         "fuera_de_sede",
         "distancia_metros",
         "es_offline",
+        "revisar_offline",
         "corrige_a",
     )
-    list_filter = ("tipo", "fuera_de_sede", "es_offline", "sede")
+    list_filter = (
+        "tipo",
+        "fuera_de_sede",
+        "es_offline",
+        "revisar_offline",
+        "sede",
+    )
     search_fields = ("empleado__documento_identidad", "empleado__apellidos")
     date_hierarchy = "timestamp_servidor"
 

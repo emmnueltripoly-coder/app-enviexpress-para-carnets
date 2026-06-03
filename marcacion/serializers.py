@@ -1,8 +1,25 @@
-"""Serializers de marcación (Hito 3)."""
+"""Serializers de marcación (Hitos 3 y 4)."""
 
 from rest_framework import serializers
 
 from .models import Marcacion
+
+
+class SyncItemSerializer(serializers.Serializer):
+    """Un ítem de marcación offline dentro del lote de sincronización."""
+
+    token_qr = serializers.CharField()
+    tipo = serializers.ChoiceField(choices=Marcacion.Tipo.choices)
+    latitud = serializers.DecimalField(max_digits=9, decimal_places=6)
+    longitud = serializers.DecimalField(max_digits=9, decimal_places=6)
+    # Hora del celular al escanear: SOLO informativa, opcional.
+    timestamp_dispositivo = serializers.DateTimeField(required=False, allow_null=True)
+
+
+class SyncBatchSerializer(serializers.Serializer):
+    """Lote de marcaciones offline pendientes de sincronizar."""
+
+    marcaciones = SyncItemSerializer(many=True, allow_empty=False)
 
 
 class MarcacionInputSerializer(serializers.Serializer):
@@ -33,6 +50,7 @@ class MarcacionSerializer(serializers.ModelSerializer):
             "empleado",
             "sede",
             "tipo",
+            "timestamp_qr",
             "timestamp_servidor",
             "timestamp_dispositivo",
             "latitud",
@@ -40,6 +58,8 @@ class MarcacionSerializer(serializers.ModelSerializer):
             "fuera_de_sede",
             "distancia_metros",
             "es_offline",
+            "revisar_offline",
+            "qr_jti",
             "corrige_a",
             "created_at",
         )
