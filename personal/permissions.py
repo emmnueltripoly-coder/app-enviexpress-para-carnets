@@ -69,3 +69,34 @@ class EsSoloLectura(BasePermission):
         if usuario.rol == Usuario.Rol.AUDITOR:
             return request.method in SAFE_METHODS
         return True
+
+
+class _RolEnConjunto(BasePermission):
+    """Base: concede acceso si el usuario tiene uno de varios roles."""
+
+    roles_permitidos: set = set()
+
+    def has_permission(self, request, view):
+        usuario = request.user
+        return bool(
+            usuario
+            and usuario.is_authenticated
+            and usuario.rol in self.roles_permitidos
+        )
+
+
+class EsRRHHoAdmin(_RolEnConjunto):
+    """Corrección de marcaciones: solo RRHH o Admin."""
+
+    roles_permitidos = {Usuario.Rol.RRHH, Usuario.Rol.ADMIN}
+
+
+class PuedeOperarKiosco(_RolEnConjunto):
+    """Genera el QR del kiosco. Roles de gestión de sede; NUNCA empleados ni
+    auditores (un empleado no debe poder fabricarse su propio QR)."""
+
+    roles_permitidos = {
+        Usuario.Rol.ADMIN,
+        Usuario.Rol.RRHH,
+        Usuario.Rol.SUPERVISOR,
+    }

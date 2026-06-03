@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "auditoria",
     "organizacion",
     "personal",
+    "marcacion",
 ]
 
 # Modelo de usuario personalizado (Hito 1). DEBE definirse antes de la primera
