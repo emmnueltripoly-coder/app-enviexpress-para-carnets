@@ -12,6 +12,7 @@ from django.contrib import admin, messages
 from django.utils.translation import ngettext
 
 from common.admin_mixins import AuditorReadOnlyMixin, ImmutableAdminMixin, SedeFilterMixin
+from reportes.admin_actions import exportar_novedades_excel
 
 from .models import Novedad, SoporteNovedad
 from .services import cambiar_estado
@@ -77,7 +78,7 @@ class NovedadAdmin(SedeFilterMixin, AuditorReadOnlyMixin, ModelAdmin):
     list_filter = ("tipo", "estado", "activo")
     search_fields = ("empleado__documento_identidad", "empleado__apellidos")
     date_hierarchy = "created_at"
-    actions = [_aprobar_novedades, _rechazar_novedades]
+    actions = [_aprobar_novedades, _rechazar_novedades, exportar_novedades_excel]
 
     def get_actions(self, request):
         actions = super().get_actions(request)

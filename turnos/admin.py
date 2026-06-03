@@ -5,6 +5,7 @@ from unfold.admin import ModelAdmin
 from django.contrib import admin
 
 from common.admin_mixins import AuditorReadOnlyMixin, ImmutableAdminMixin, SedeFilterMixin
+from reportes.admin_actions import exportar_horas_excel, exportar_horas_pdf
 
 from .models import (
     AsignacionTurno,
@@ -56,6 +57,7 @@ class ResumenJornadaAdmin(SedeFilterMixin, ImmutableAdminMixin, AuditorReadOnlyM
     """Derivado y recalculable: solo lectura para todos."""
 
     sede_filter_field = "empleado__sede_id"
+    actions = [exportar_horas_excel, exportar_horas_pdf]
 
     list_display = (
         "empleado",

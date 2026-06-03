@@ -64,10 +64,18 @@ def _empleado(sede, usuario):
 
 
 def _fake_request(user):
-    """RequestFactory crea requests sin pasar por middleware; útil para pruebas de unidad de admin."""
+    """RequestFactory crea requests sin pasar por middleware; útil para pruebas de unidad de admin.
+
+    Se le adjunta soporte de sesión y de mensajes para que ``message_user``
+    (usado por las acciones del admin) funcione sin el middleware completo.
+    """
+    from django.contrib.messages.storage.fallback import FallbackStorage
+
     factory = RequestFactory()
     request = factory.get("/admin/")
     request.user = user
+    request.session = {}
+    setattr(request, "_messages", FallbackStorage(request))
     return request
 
 

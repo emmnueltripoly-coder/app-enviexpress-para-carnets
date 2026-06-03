@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     "marcacion",
     "turnos",
     "novedades",
+    "reportes",
 ]
 
 # Modelo de usuario personalizado (Hito 1). DEBE definirse antes de la primera

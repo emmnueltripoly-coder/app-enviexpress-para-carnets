@@ -11,6 +11,10 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 from common.admin_mixins import AuditorReadOnlyMixin, ImmutableAdminMixin, SedeFilterMixin
+from reportes.admin_actions import (
+    exportar_habeas_data_excel,
+    exportar_habeas_data_pdf,
+)
 
 from .models import ConsentimientoHabeasData, Empleado, Usuario
 
@@ -39,6 +43,18 @@ class EmpleadoAdmin(SedeFilterMixin, AuditorReadOnlyMixin, ModelAdmin):
     list_filter = ("activo", "sede", "sede__ciudad")
     search_fields = ("documento_identidad", "nombres", "apellidos")
     autocomplete_fields = ("usuario", "sede")
+    actions = [exportar_habeas_data_excel, exportar_habeas_data_pdf]
+
+    def get_actions(self, request):
+        # La exportación individual Habeas Data solo la pueden lanzar RRHH/Admin
+        # desde el panel (el propio empleado la pide por la app/endpoint).
+        actions = super().get_actions(request)
+        if getattr(request.user, "rol", None) not in {
+            Usuario.Rol.RRHH, Usuario.Rol.ADMIN
+        }:
+            actions.pop(exportar_habeas_data_excel.__name__, None)
+            actions.pop(exportar_habeas_data_pdf.__name__, None)
+        return actions
 
 
 @admin.register(ConsentimientoHabeasData)

@@ -10,6 +10,11 @@ from unfold.admin import ModelAdmin
 from django.contrib import admin
 
 from common.admin_mixins import AuditorReadOnlyMixin, ImmutableAdminMixin, SedeFilterMixin
+from reportes.admin_actions import (
+    exportar_asistencia_excel,
+    exportar_asistencia_pdf,
+    exportar_excepciones_excel,
+)
 
 from .models import Marcacion
 
@@ -17,6 +22,11 @@ from .models import Marcacion
 @admin.register(Marcacion)
 class MarcacionAdmin(SedeFilterMixin, ImmutableAdminMixin, AuditorReadOnlyMixin, ModelAdmin):
     sede_filter_field = "sede_id"
+    actions = [
+        exportar_asistencia_excel,
+        exportar_asistencia_pdf,
+        exportar_excepciones_excel,
+    ]
 
     list_display = (
         "id",
