@@ -114,20 +114,41 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Si no está definido se usan las variables DB_* individuales (desarrollo).
 # ==========================================================================
 import dj_database_url  # noqa: E402 — importación local para mantener legibilidad
+from django.core.exceptions import ImproperlyConfigured  # noqa: E402
 
-_DATABASE_URL = os.environ.get("DATABASE_URL")
+# Normaliza el valor: Render/los paneles a veces dejan comillas o espacios
+# alrededor del valor pegado. Eso rompe el parseo y produce el error
+# "settings.DATABASES is improperly configured ... supply the NAME value".
+_DATABASE_URL = (os.environ.get("DATABASE_URL") or "").strip().strip('"').strip("'")
 _CONN_MAX_AGE = int(os.environ.get("CONN_MAX_AGE", "0"))
 # Nota: con el connection pooler de Supabase (puerto 6543, modo transaction)
 # CONN_MAX_AGE debe ser 0. Para conexión directa (puerto 5432) puede ser 60.
 
 if _DATABASE_URL:
-    DATABASES = {
-        "default": dj_database_url.config(
-            default=_DATABASE_URL,
+    try:
+        _db = dj_database_url.parse(
+            _DATABASE_URL,
             conn_max_age=_CONN_MAX_AGE,
             conn_health_checks=True,
+            # Supabase/Render exigen TLS; fuerza sslmode=require si no viene en la URL.
+            ssl_require=True,
         )
-    }
+    except Exception as exc:  # ParseError, UnknownSchemeError, etc.
+        raise ImproperlyConfigured(
+            "DATABASE_URL no se pudo interpretar. Causa habitual: la contraseña "
+            "contiene caracteres especiales (# ? / % @ : espacio) sin codificar. "
+            "Codifique la contraseña en formato URL (percent-encoding): por "
+            "ejemplo '#'->%23, '?'->%3F, '/'->%2F, '%'->%25, '@'->%40. "
+            f"Detalle: {exc}"
+        ) from exc
+
+    # Si la URL no incluye el nombre de la base, Django falla con
+    # "supply the NAME value". En Supabase la base siempre es 'postgres':
+    # se usa como respaldo configurable en vez de fallar de forma críptica.
+    if not _db.get("NAME"):
+        _db["NAME"] = os.environ.get("DB_NAME", "postgres")
+
+    DATABASES = {"default": _db}
 else:
     DATABASES = {
         "default": {
