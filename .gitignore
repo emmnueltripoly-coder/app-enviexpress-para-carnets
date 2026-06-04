@@ -1,7 +1,16 @@
 # Entorno / secretos
 .env
 *.env
+.env.*
 !.env.example
+# Credenciales / llaves que nunca deben subirse
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+secrets.json
+service-account*.json
 
 # Python
 __pycache__/
