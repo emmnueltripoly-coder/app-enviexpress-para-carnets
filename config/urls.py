@@ -18,8 +18,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 
+from config.diagnostico import diagnostico_email, diagnostico_storage
+
 urlpatterns = [
     path("admin/", admin.site.urls),
+    # Diagnóstico TEMPORAL (solo staff) — quitar tras verificar el despliegue.
+    path("diagnostico/email/", diagnostico_email),
+    path("diagnostico/storage/", diagnostico_storage),
     path("api/", include("personal.urls")),
     path("api/marcacion/", include("marcacion.urls")),
     path("api/turnos/", include("turnos.urls")),
