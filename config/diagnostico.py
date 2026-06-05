@@ -42,25 +42,34 @@ def diagnostico_email(request):
     lineas.append("</ul>")
 
     destinatarios = settings.NOVEDADES_EMAILS or [settings.DEFAULT_FROM_EMAIL]
-    lineas.append("<h2>Resultado del envío de prueba</h2>")
-    try:
-        from django.core.mail import send_mail
+    lineas.append("<h2>Prueba de envío</h2>")
 
-        enviados = send_mail(
-            "Prueba de diagnóstico — Enviexpress",
-            "Si lees esto, el correo SMTP funciona correctamente.",
-            settings.DEFAULT_FROM_EMAIL,
-            destinatarios,
-            fail_silently=False,
-        )
+    if request.GET.get("enviar") == "1":
+        try:
+            from django.core.mail import send_mail
+
+            enviados = send_mail(
+                "Prueba de diagnóstico — Enviexpress",
+                "Si lees esto, el correo SMTP funciona correctamente.",
+                settings.DEFAULT_FROM_EMAIL,
+                destinatarios,
+                fail_silently=False,
+            )
+            lineas.append(
+                f"<p style='color:green'><b>OK</b> — send_mail devolvió {enviados}. "
+                f"Revisa la bandeja (y spam) de: {escape(', '.join(destinatarios))}</p>"
+            )
+        except Exception:  # noqa: BLE001
+            lineas.append(
+                "<p style='color:red'><b>FALLÓ el envío.</b> Detalle del error:</p>"
+                f"<pre style='background:#eee;padding:1em'>{escape(traceback.format_exc())}</pre>"
+            )
+    else:
+        url = request.build_absolute_uri("?enviar=1")
         lineas.append(
-            f"<p style='color:green'><b>OK</b> — send_mail devolvió {enviados}. "
-            f"Revisa la bandeja (y spam) de: {escape(', '.join(destinatarios))}</p>"
-        )
-    except Exception:  # noqa: BLE001 — queremos ver CUALQUIER error
-        lineas.append(
-            "<p style='color:red'><b>FALLÓ el envío.</b> Detalle del error:</p>"
-            f"<pre style='background:#eee;padding:1em'>{escape(traceback.format_exc())}</pre>"
+            f"<p>Configuración cargada correctamente. "
+            f"Para enviar un correo de prueba haz clic aquí: "
+            f"<a href='{url}'>{url}</a></p>"
         )
 
     return HttpResponse("\n".join(lineas))
