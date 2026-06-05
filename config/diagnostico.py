@@ -31,6 +31,9 @@ def _mask(valor: str) -> str:
 @_staff
 def diagnostico_email(request):
     lineas = ["<h1>Diagnóstico de Email</h1>", "<h2>Configuración actual</h2>", "<ul>"]
+    resend_activo = bool(getattr(settings, "RESEND_API_KEY", ""))
+    modo_html = "<b style='color:green'>Resend API</b>" if resend_activo else "SMTP"
+    lineas.append(f"<li>Modo: {modo_html}</li>")
     lineas.append(f"<li>EMAIL_BACKEND: {escape(settings.EMAIL_BACKEND)}</li>")
     lineas.append(f"<li>EMAIL_HOST: {escape(settings.EMAIL_HOST)}</li>")
     lineas.append(f"<li>EMAIL_PORT: {settings.EMAIL_PORT}</li>")

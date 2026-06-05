@@ -234,10 +234,24 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # ==========================================================================
 # EMAIL — notificación de novedades a RRHH
+#
+# Prioridad:
+#   1. RESEND_API_KEY presente → usa Resend (API HTTP, funciona en Render free).
+#   2. EMAIL_BACKEND explícita → respeta lo que diga la variable.
+#   3. Sin nada → consola (desarrollo).
+#
+# Render free tier BLOQUEA SMTP (puerto 587). Usar Resend resuelve esto.
 # ==========================================================================
-EMAIL_BACKEND = os.environ.get(
-    "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
-)
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
+
+if RESEND_API_KEY:
+    EMAIL_BACKEND = "anymail.backends.resend.EmailBackend"
+    ANYMAIL = {"RESEND_API_KEY": RESEND_API_KEY}
+else:
+    EMAIL_BACKEND = os.environ.get(
+        "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
+    )
+
 DEFAULT_FROM_EMAIL = os.environ.get(
     "DEFAULT_FROM_EMAIL", "no-responder@enviexpresslogistica.com"
 )
