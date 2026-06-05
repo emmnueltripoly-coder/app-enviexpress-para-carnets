@@ -9,13 +9,14 @@ Supervisor ve solo novedades de su sede.
 from unfold.admin import ModelAdmin
 
 from django.contrib import admin, messages
+from django.db import transaction
 from django.utils.translation import ngettext
 
 from common.admin_mixins import AuditorReadOnlyMixin, ImmutableAdminMixin, SedeFilterMixin
 from reportes.admin_actions import exportar_novedades_excel
 
 from .models import Novedad, SoporteNovedad
-from .services import cambiar_estado
+from .services import cambiar_estado, _notificar_rrhh
 
 
 def _aprobar_novedades(modeladmin, request, queryset):
@@ -79,6 +80,12 @@ class NovedadAdmin(SedeFilterMixin, AuditorReadOnlyMixin, ModelAdmin):
     search_fields = ("empleado__documento_identidad", "empleado__apellidos")
     date_hierarchy = "created_at"
     actions = [_aprobar_novedades, _rechazar_novedades, exportar_novedades_excel]
+
+    def save_model(self, request, obj, form, change):
+        is_new = obj._state.adding
+        super().save_model(request, obj, form, change)
+        if is_new:
+            transaction.on_commit(lambda: _notificar_rrhh(obj))
 
     def get_actions(self, request):
         actions = super().get_actions(request)
