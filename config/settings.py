@@ -252,9 +252,16 @@ else:
         "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
     )
 
-DEFAULT_FROM_EMAIL = os.environ.get(
-    "DEFAULT_FROM_EMAIL", "no-responder@enviexpresslogistica.com"
+# Si el dominio enviexpresslogistica.com aún no está verificado en Resend,
+# los correos deben salir desde onboarding@resend.dev (dominio compartido de Resend).
+# Una vez verificado el dominio, quitar RESEND_DOMAIN_VERIFIED o poner DEFAULT_FROM_EMAIL
+# en Render con el valor deseado.
+_default_from = (
+    "Enviexpress Logística <onboarding@resend.dev>"
+    if (RESEND_API_KEY and not os.environ.get("RESEND_DOMAIN_VERIFIED"))
+    else "no-responder@enviexpresslogistica.com"
 )
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", _default_from)
 EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
 EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
