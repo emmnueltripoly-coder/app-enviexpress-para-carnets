@@ -274,6 +274,14 @@ CORS_ALLOWED_ORIGINS = [
 ]
 CORS_ALLOW_CREDENTIALS = False  # JWT en header, no en cookie → no hace falta
 
+# CSRF — requerido para que el panel admin funcione en producción con HTTPS.
+# Django rechaza POST si el origen no está en esta lista cuando DEBUG=False.
+CSRF_TRUSTED_ORIGINS = [
+    o.strip()
+    for o in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",")
+    if o.strip()
+]
+
 
 # ==========================================================================
 # DJANGO REST FRAMEWORK
@@ -287,6 +295,14 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
         "personal.permissions.EsSoloLectura",
     ),
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "60/hour",
+        "user": "1000/hour",
+    },
 }
 
 
@@ -354,3 +370,48 @@ if not DEBUG:
     # Protección adicional contra sniffing y clickjacking.
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = "DENY"
+
+    # Advertencia temprana si Supabase Storage no está configurado.
+    # Sin S3, los archivos adjuntos se guardan en disco efímero de Render
+    # y se pierden en cada redespliegue.
+    if not os.environ.get("SUPABASE_S3_ACCESS_KEY"):
+        import warnings
+        warnings.warn(
+            "SUPABASE_S3_ACCESS_KEY no está configurada. Los archivos adjuntos "
+            "se guardarán en disco local (efímero en Render) y se perderán al "
+            "redesplegar. Configure las variables SUPABASE_S3_* en Render.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+
+
+# ==========================================================================
+# LOGGING — stderr estructurado, visible en Render Logs
+# ==========================================================================
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "render": {
+            "format": "[{levelname}] {asctime} {name}: {message}",
+            "style": "{",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "render",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "WARNING",
+    },
+    "loggers": {
+        "django": {"handlers": ["console"], "level": "INFO", "propagate": False},
+        "django.request": {"handlers": ["console"], "level": "ERROR", "propagate": False},
+        "novedades": {"handlers": ["console"], "level": "INFO", "propagate": False},
+        "auditoria": {"handlers": ["console"], "level": "INFO", "propagate": False},
+    },
+}

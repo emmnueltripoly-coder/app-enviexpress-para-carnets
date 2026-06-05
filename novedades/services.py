@@ -8,11 +8,14 @@ contenido de salud NUNCA viaja por email ni se expone en URLs públicas.
 
 from __future__ import annotations
 
+import logging
 from typing import Optional
 
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db import transaction
+
+logger = logging.getLogger(__name__)
 
 from auditoria.models import AuditLog
 from auditoria.services import AuditService
@@ -48,13 +51,21 @@ def _notificar_rrhh(novedad: Novedad) -> None:
         "soportes adjuntos NO se incluyen en este correo: ingrese al panel para "
         "consultarlos.\n"
     )
-    send_mail(
-        asunto,
-        cuerpo,
-        settings.DEFAULT_FROM_EMAIL,
-        destinatarios,
-        fail_silently=False,
-    )
+    try:
+        send_mail(
+            asunto,
+            cuerpo,
+            settings.DEFAULT_FROM_EMAIL,
+            destinatarios,
+            fail_silently=False,
+        )
+        logger.info("Notificación de novedad enviada a %s", destinatarios)
+    except Exception:
+        logger.exception(
+            "Error al enviar notificación de novedad %s a RRHH. "
+            "La novedad se creó correctamente pero el aviso no llegó.",
+            novedad.pk,
+        )
 
 
 @transaction.atomic

@@ -61,3 +61,13 @@ class MeView(APIView):
 
     def get(self, request, *args, **kwargs):
         return Response(UsuarioMeSerializer(request.user).data)
+
+
+class HealthCheckView(APIView):
+    """GET: responde 200 OK. Usado por Render para verificar que el servicio está vivo."""
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request, *args, **kwargs):
+        return Response({"status": "ok"})

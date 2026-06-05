@@ -16,7 +16,7 @@ services:
       --workers 2
       --timeout 120
       --log-level info
-    healthCheckPath: /api/auth/login/
+    healthCheckPath: /api/health/
     autoDeploy: true
 
     envVars:
@@ -43,6 +43,10 @@ services:
         sync: false
       - key: DJANGO_SUPERUSER_EMAIL
         sync: false
+
+      # --- CSRF (requerido para el panel admin con DEBUG=False + HTTPS) ---
+      - key: CSRF_TRUSTED_ORIGINS
+        sync: false      # Ej: https://control-asistencia-yhp7.onrender.com
 
       # --- CORS (app móvil web / futuros frontends) ---
       - key: CORS_ALLOWED_ORIGINS
