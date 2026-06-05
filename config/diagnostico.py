@@ -18,6 +18,8 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.http import HttpResponse
 from django.utils.html import escape
 
+_staff = lambda f: staff_member_required(f, login_url="/admin/login/")
+
 
 def _mask(valor: str) -> str:
     """Muestra solo si un secreto está definido y su longitud, nunca el valor."""
@@ -26,7 +28,7 @@ def _mask(valor: str) -> str:
     return f"(definido, {len(valor)} caracteres)"
 
 
-@staff_member_required
+@_staff
 def diagnostico_email(request):
     lineas = ["<h1>Diagnóstico de Email</h1>", "<h2>Configuración actual</h2>", "<ul>"]
     lineas.append(f"<li>EMAIL_BACKEND: {escape(settings.EMAIL_BACKEND)}</li>")
@@ -64,7 +66,7 @@ def diagnostico_email(request):
     return HttpResponse("\n".join(lineas))
 
 
-@staff_member_required
+@_staff
 def diagnostico_storage(request):
     lineas = ["<h1>Diagnóstico de Storage</h1>", "<h2>Configuración actual</h2>", "<ul>"]
     lineas.append(f"<li>SUPABASE_S3_ACCESS_KEY: {_mask(settings.SUPABASE_S3_ACCESS_KEY)}</li>")
